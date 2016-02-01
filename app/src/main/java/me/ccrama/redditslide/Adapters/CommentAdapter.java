@@ -1153,7 +1153,11 @@ public class CommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         int i = 0;
         for (CommentNode ignored : user.walkTree()) {
             i++;
+            if(ignored.hasMoreComments()){
+                i++;
+            }
         }
+
         return i - 1;
     }
 
@@ -1221,6 +1225,15 @@ public class CommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 i += unhideNumber(ignored, 0);
             }
         }
+        if(n.hasMoreComments()){
+            String fullname  = n.getComment().getFullName() + "more";
+
+            if (hidden.contains(fullname)) {
+                i++;
+                hidden.remove(fullname);
+
+            }
+        }
         return i;
     }
 
@@ -1237,11 +1250,9 @@ public class CommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     hidden.add(fullname);
 
                 }
-                if(n.getMoreChildren() != null){
+                if(ignored.hasMoreComments()){
                     fullname  = fullname + "more";
-                    if (hiddenPersons.contains(fullname)) {
-                        hiddenPersons.remove(fullname);
-                    }
+
                     if (!hidden.contains(fullname)) {
                         i++;
                         hidden.add(fullname);
@@ -1249,6 +1260,15 @@ public class CommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     }
                 }
                 i += hideNumber(ignored, 0);
+            }
+            if(n.hasMoreComments()){
+                String fullname  = n.getComment().getFullName() + "more";
+
+                if (!hidden.contains(fullname)) {
+                    i++;
+                    hidden.add(fullname);
+
+                }
             }
         }
         return i;
