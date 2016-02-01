@@ -94,6 +94,8 @@ import me.ccrama.redditslide.Views.MakeTextviewClickable;
 import me.ccrama.redditslide.Views.ToggleSwipeViewPager;
 import me.ccrama.redditslide.Visuals.Palette;
 import me.ccrama.redditslide.util.LogUtil;
+import me.ccrama.redditslide.util.NetworkUtil;
+
 
 public class MainActivity extends BaseActivity {
     public static final String EXTRA_PAGE_TO = "pageTo";
@@ -127,6 +129,7 @@ public class MainActivity extends BaseActivity {
     View headerMain;
     private AsyncGetSubreddit mAsyncGetSubreddit = null;
     private TabLayout mTabLayout;
+    private ListView drawerSubList;
     private boolean mShowInfoButton;
 
     @Override
@@ -140,6 +143,7 @@ public class MainActivity extends BaseActivity {
             restartTheme();
         } else if (requestCode == RESET_ADAPTER_RESULT) {
             resetAdapter();
+            setDrawerSubList();
         } else if (requestCode == 4 && resultCode != 4) { //what?
             if (e != null) {
                 e.clearFocus();
@@ -702,18 +706,18 @@ public class MainActivity extends BaseActivity {
     }
 
     public void doDrawer() {
-        final ListView l = (ListView) findViewById(R.id.drawerlistview);
-        l.setDividerHeight(0);
+        drawerSubList = (ListView) findViewById(R.id.drawerlistview);
+        drawerSubList.setDividerHeight(0);
         final LayoutInflater inflater = getLayoutInflater();
         final View header;
 
         if (Authentication.isLoggedIn && Authentication.didOnline) {
 
-            header = inflater.inflate(R.layout.drawer_loggedin, l, false);
+            header = inflater.inflate(R.layout.drawer_loggedin, drawerSubList, false);
             headerMain = header;
             hea = header.findViewById(R.id.back);
 
-            l.addHeaderView(header, null, false);
+            drawerSubList.addHeaderView(header, null, false);
             ((TextView) header.findViewById(R.id.name)).setText(Authentication.name);
             header.findViewById(R.id.multi).setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -745,7 +749,7 @@ public class MainActivity extends BaseActivity {
             header.findViewById(R.id.logout).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    chooseAccounts();
+                    chooseAccounts(true);
                 }
             });
             //update notification badge
@@ -788,8 +792,8 @@ public class MainActivity extends BaseActivity {
                 header.findViewById(R.id.mod).setVisibility(View.GONE);
             }
         } else {
-            header = inflater.inflate(R.layout.drawer_loggedout, l, false);
-            l.addHeaderView(header, null, false);
+            header = inflater.inflate(R.layout.drawer_loggedout, drawerSubList, false);
+            drawerSubList.addHeaderView(header, null, false);
             hea = header.findViewById(R.id.back);
 
             header.findViewById(R.id.profile).setOnClickListener(new View.OnClickListener() {
@@ -873,15 +877,7 @@ public class MainActivity extends BaseActivity {
                 Overview.this.startActivityForResult(inte, 3);
             }
         });*/
-        ArrayList<String> copy = new ArrayList<>();
-        if ((SettingValues.alphabetical_home && SubredditStorage.alphabeticalSubreddits != null) || (!SettingValues.alphabetical_home && SubredditStorage.subredditsForHome != null))
-            for (String s : SettingValues.alphabetical_home ? SubredditStorage.alphabeticalSubreddits : SubredditStorage.subredditsForHome) {
-                copy.add(s);
-            }
-        e = ((EditText) header.findViewById(R.id.sort));
 
-        final SideArrayAdapter adapter = new SideArrayAdapter(this, copy);
-        l.setAdapter(adapter);
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         final ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(
@@ -909,6 +905,19 @@ public class MainActivity extends BaseActivity {
         actionBarDrawerToggle.syncState();
         header.findViewById(R.id.back).setBackgroundColor(Palette.getColor("alsdkfjasld"));
 
+        setDrawerSubList();
+    }
+
+    public void setDrawerSubList() {
+        ArrayList<String> copy = new ArrayList<>();
+        if ((SettingValues.alphabetical_home && SubredditStorage.alphabeticalSubreddits != null) || (!SettingValues.alphabetical_home && SubredditStorage.subredditsForHome != null))
+            for (String s : SettingValues.alphabetical_home ? SubredditStorage.alphabeticalSubreddits : SubredditStorage.subredditsForHome) {
+                copy.add(s);
+            }
+        e = ((EditText) headerMain.findViewById(R.id.sort));
+
+        final SideArrayAdapter adapter = new SideArrayAdapter(this, copy);
+        drawerSubList.setAdapter(adapter);
 
         e.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
@@ -955,7 +964,7 @@ public class MainActivity extends BaseActivity {
     }
 
 
-    public void chooseAccounts() {
+    public void chooseAccounts(boolean cancelable) {
 
         final HashMap<String, String> accounts = new HashMap<>();
 
@@ -975,13 +984,14 @@ public class MainActivity extends BaseActivity {
         } else {
             new AlertDialogWrapper.Builder(MainActivity.this)
                     .setTitle(R.string.general_switch_acc)
+                    .setCancelable(cancelable)
                     .setAdapter(new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_expandable_list_item_1, keys), new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(final DialogInterface dialog, final int which) {
                             new AlertDialogWrapper.Builder(MainActivity.this)
-                                    .setTitle("Switch or Delete")
-                                    .setMessage("Would you like to switch to this account or remove this account?")
-                                    .setPositiveButton("Switch", new DialogInterface.OnClickListener() {
+                                    .setTitle(R.string.drawer_account_switch)
+                                    .setMessage(R.string.drawer_account_switch_msg)
+                                    .setPositiveButton(R.string.btn_switch, new DialogInterface.OnClickListener() {
                                         @Override
                                         public void onClick(DialogInterface dialog, int which2) {
                                             if (!accounts.get(keys.get(which)).isEmpty()) {
@@ -993,7 +1003,7 @@ public class MainActivity extends BaseActivity {
 
                                             Reddit.forceRestart(MainActivity.this);
                                         }
-                                    }).setNegativeButton("Delete", new DialogInterface.OnClickListener() {
+                                    }).setNegativeButton(R.string.btn_delete, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog2, int which2) {
                                     Set<String> accounts2 = Authentication.authentication.getStringSet("accounts", new HashSet<String>());
@@ -1008,7 +1018,7 @@ public class MainActivity extends BaseActivity {
                                     dialog2.dismiss();
 
 
-                                    chooseAccounts();
+                                    chooseAccounts(false);
 
                                 }
                             }).show();
@@ -1030,8 +1040,7 @@ public class MainActivity extends BaseActivity {
                 adapter = new OverviewPagerAdapter(getSupportFragmentManager());
 
                 pager.setAdapter(adapter);
-                if (mTabLayout != null)
-                    mTabLayout.setupWithViewPager(pager);
+                if (mTabLayout != null) mTabLayout.setupWithViewPager(pager);
 
                 pager.setCurrentItem(usedArray.indexOf(subToDo));
 
@@ -1256,7 +1265,7 @@ public class MainActivity extends BaseActivity {
     @Override
     public void onResume() {
         super.onResume();
-        if (Authentication.isLoggedIn && Authentication.didOnline) {
+        if (Authentication.isLoggedIn && Authentication.didOnline && NetworkUtil.isConnected(MainActivity.this)) {
             new AsyncNotificationBadge().execute();
         }
     }
@@ -1300,7 +1309,7 @@ public class MainActivity extends BaseActivity {
                     if (adapter.getCurrentFragment() != null) {
                         SubredditPosts p = ((SubmissionsView) adapter.getCurrentFragment()).adapter.dataSet;
                         if (p.offline && p.cached != null) {
-                            Toast.makeText(MainActivity.this, "Last updated " + TimeUtils.getTimeAgo(p.cached.time, MainActivity.this), Toast.LENGTH_LONG).show();
+                            Toast.makeText(MainActivity.this, getString(R.string.offline_last_update, TimeUtils.getTimeAgo(p.cached.time, MainActivity.this)), Toast.LENGTH_LONG).show();
 
 
                         }
@@ -1386,18 +1395,24 @@ public class MainActivity extends BaseActivity {
 
         @Override
         protected Void doInBackground(Void... params) {
-            count = Authentication.reddit.me().getInboxCount();
+            try {
+                count = Authentication.reddit.me().getInboxCount();
+            } catch (NetworkException e) {
+                Log.w(LogUtil.getTag(), "Cannot fetch inbot count");
+                count = -1;
+            }
             return null;
         }
 
         @Override
         protected void onPostExecute(Void aVoid) {
+            View badge = headerMain.findViewById(R.id.count);
             if (count == 0) {
-                headerMain.findViewById(R.id.count).setVisibility(View.GONE);
+                if (badge != null) badge.setVisibility(View.GONE);
                 NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
                 notificationManager.cancelAll();
-            } else {
-                headerMain.findViewById(R.id.count).setVisibility(View.VISIBLE);
+            } else if (count != -1) {
+                if (badge != null) badge.setVisibility(View.VISIBLE);
                 ((TextView) headerMain.findViewById(R.id.count)).setText(count + "");
             }
         }
