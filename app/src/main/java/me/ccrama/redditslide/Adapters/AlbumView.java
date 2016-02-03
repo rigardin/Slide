@@ -36,15 +36,11 @@ public class AlbumView extends RecyclerView.Adapter<AlbumView.ViewHolder> {
         main = context;
         this.users = users;
         list = new ArrayList<>();
-        if (gallery) {
-            for (final JsonElement elem : users) {
-                list.add("https://imgur.com/" + elem.getAsJsonObject().get("hash").getAsString() + ".png");
-            }
-        } else {
-            for (final JsonElement elem : users) {
-                list.add(elem.getAsJsonObject().getAsJsonObject("links").get("original").getAsString());
-            }
+
+        for (final JsonElement elem : users) {
+            list.add(elem.getAsJsonObject().get("link").getAsString());
         }
+
     }
 
     @Override
@@ -58,65 +54,38 @@ public class AlbumView extends RecyclerView.Adapter<AlbumView.ViewHolder> {
         final JsonElement user = users.get(position);
 
         final String url = list.get(position);
+        final boolean isGif = user.getAsJsonObject().get("animated").getAsBoolean();
 
         ((Reddit) main.getApplicationContext()).getImageLoader().displayImage(url, holder.image);
         holder.body.setVisibility(View.VISIBLE);
         holder.text.setVisibility(View.VISIBLE);
-        if (user.getAsJsonObject().has("image")) {
-            {
-                if (!user.getAsJsonObject().getAsJsonObject("image").get("title").isJsonNull()) {
 
-                    new MakeTextviewClickable().ParseTextWithLinksTextViewComment(user.getAsJsonObject().getAsJsonObject("image").get("title").getAsString(), holder.text, (Activity) main, "");
-                    if (holder.text.getText().toString().isEmpty()) {
-                        holder.text.setVisibility(View.GONE);
-                    }
-
-                } else {
-                    holder.text.setVisibility(View.GONE);
-
-                }
-            }
-            {
-                if(! user.getAsJsonObject().getAsJsonObject("image").get("caption").isJsonNull()) {
-                    holder.body.setText(user.getAsJsonObject().getAsJsonObject("image").get("caption").getAsString());
-                    new MakeTextviewClickable().ParseTextWithLinksTextViewComment(user.getAsJsonObject().getAsJsonObject("image").get("caption").getAsString(), holder.body, (Activity) main, "");
-
-                    if (holder.body.getText().toString().isEmpty()) {
-                        holder.body.setVisibility(View.GONE);
-                    }
-                } else {
-                    holder.body.setVisibility(View.GONE);
-
-                }
-            }
-        } else {
-            if(user.getAsJsonObject().has("title")){
-                new MakeTextviewClickable().ParseTextWithLinksTextViewComment(user.getAsJsonObject().get("title").getAsString(), holder.text, (Activity) main, "");
-                if (holder.text.getText().toString().isEmpty()) {
-                    holder.text.setVisibility(View.GONE);
-                }
-
-            } else {
-
+        if (user.getAsJsonObject().has("title") && !user.getAsJsonObject().get("title").isJsonNull()) {
+            new MakeTextviewClickable().ParseTextWithLinksTextViewComment(user.getAsJsonObject().get("title").getAsString(), holder.text, (Activity) main, "");
+            if (holder.text.getText().toString().isEmpty()) {
                 holder.text.setVisibility(View.GONE);
-
-            }
-            if(user.getAsJsonObject().has("description")){
-                new MakeTextviewClickable().ParseTextWithLinksTextViewComment(user.getAsJsonObject().get("description").getAsString(), holder.body, (Activity) main, "");
-                if (holder.body.getText().toString().isEmpty()) {
-                    holder.body.setVisibility(View.GONE);
-                }
-            } else {
-                holder.body.setVisibility(View.GONE);
-
             }
 
+        } else {
+
+            holder.text.setVisibility(View.GONE);
 
         }
+        if (user.getAsJsonObject().has("description") && !user.getAsJsonObject().get("description").isJsonNull()) {
+            new MakeTextviewClickable().ParseTextWithLinksTextViewComment(user.getAsJsonObject().get("description").getAsString(), holder.body, (Activity) main, "");
+            if (holder.body.getText().toString().isEmpty()) {
+                holder.body.setVisibility(View.GONE);
+            }
+        } else {
+            holder.body.setVisibility(View.GONE);
+
+        }
+
+
         View.OnClickListener onGifImageClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (url.contains("gif")) {
+                if (isGif) {
                     if (SettingValues.gif) {
                         Intent myIntent = new Intent(main, GifView.class);
                         myIntent.putExtra(GifView.EXTRA_URL, url);
@@ -137,10 +106,10 @@ public class AlbumView extends RecyclerView.Adapter<AlbumView.ViewHolder> {
         };
 
 
-        if (url.contains("gif")) {
+        if (isGif) {
             holder.body.setVisibility(View.VISIBLE);
             holder.body.setSingleLine(false);
-            holder.body.setText(holder.text.getText() + main.getString(R.string.submission_tap_gif).toUpperCase()); //got rid of the \n thing, because it didnt parse and it was already a new line so...
+            holder.body.setText(holder.text.getText() + main.getString(R.string.submission_tap_gif).toUpperCase());
             holder.body.setOnClickListener(onGifImageClickListener);
         }
 

@@ -17,13 +17,12 @@ import me.ccrama.redditslide.util.AlbumUtils;
 /**
  * Created by ccrama on 3/5/2015.
  *
- * This class is responsible for accessing the Imgur api to get the album json data
- * from a URL or Imgur hash. It extends FullScreenActivity and supports swipe from anywhere.
+ * This class is responsible for displaying album images vertical.
+ * It extends FullScreenActivity and supports swipe from anywhere.
  *
  */
 public class Album extends FullScreenActivity {
     public static final String EXTRA_URL = "url";
-    boolean gallery = false;
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

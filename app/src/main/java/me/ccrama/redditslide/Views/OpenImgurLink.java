@@ -16,6 +16,7 @@ import me.ccrama.redditslide.util.NetworkUtil;
  * Created by carlo_000 on 1/16/2016.
  */
 public class OpenImgurLink {
+    public static final String IMGUR_CLIENT_ID = "Client-ID " + "bef87913eb202e9";
     public static void openImgurLink(final Context c, String url) {
         if (url.endsWith("/")) {
             url = url.substring(0, url.length() - 1);
@@ -31,10 +32,10 @@ public class OpenImgurLink {
                 if (obj.has("error")) {
                     ((Activity) c).finish();
                 } else {
-                    String type = obj.get("image").getAsJsonObject().get("image").getAsJsonObject().get("type").getAsString();
+                    Boolean isAnimated = obj.get("image").getAsJsonObject().get("image").getAsJsonObject().get("animated").getAsBoolean();
                     String urls = obj.get("image").getAsJsonObject().get("links").getAsJsonObject().get("original").getAsString();
 
-                    if (type.contains("gif")) {
+                    if (isAnimated) {
                         Intent i = new Intent(c, GifView.class);
                         i.putExtra(GifView.EXTRA_URL, urls);
                         c.startActivity(i);

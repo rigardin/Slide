@@ -31,7 +31,6 @@ import me.ccrama.redditslide.Activities.CommentsScreenPopup;
 import me.ccrama.redditslide.Activities.FullscreenVideo;
 import me.ccrama.redditslide.Activities.Website;
 import me.ccrama.redditslide.ContentType;
-import me.ccrama.redditslide.DataShare;
 import me.ccrama.redditslide.ImageLoaderUtils;
 import me.ccrama.redditslide.OfflineSubreddit;
 import me.ccrama.redditslide.R;
@@ -161,7 +160,7 @@ public class ImageFull extends Fragment {
                         if (SettingValues.album) {
                             if(SettingValues.albumSwipe){
                                 Intent i = new Intent(contextActivity, AlbumPager.class);
-                                i.putExtra(Album.EXTRA_URL, submission.getUrl());
+                                i.putExtra(AlbumPager.EXTRA_URL, submission.getUrl());
                                 contextActivity.startActivity(i);
                                 contextActivity.overridePendingTransition(R.anim.slideright, R.anim.fade_out);
                             } else {
