@@ -24,8 +24,11 @@ public class OpenImgurLink {
     public static final String IMGUR_CLIENT_ID = "Client-ID " + "bef87913eb202e9";
 
     /**
-     * Determines which content type an imgur link is and opens it in the appropriate class
-     * Types: Album, Gif, Image
+     * Opens an imgur link without specified type
+     * Determines which content type the link is and opens it in the appropriate activity
+     *
+     * Possible Types: Album, Gif, Image
+     *
      * @param c Context
      * @param url Imgur link in the format http://www.imgur.com/ID
      */
@@ -77,7 +80,7 @@ public class OpenImgurLink {
                                     ((Activity) c).overridePendingTransition(0, 0);
                                 }
                                 ((Activity) c).finish();
-                            } else ((Activity) c).finish();
+                            }
                         }
                     });
 

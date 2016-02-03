@@ -1,7 +1,6 @@
 package me.ccrama.redditslide.util;
 
 import android.app.Activity;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.annotation.Nullable;
@@ -9,7 +8,6 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 
-import com.afollestad.materialdialogs.AlertDialogWrapper;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -20,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
+import me.ccrama.redditslide.Activities.FullscreenImage;
 import me.ccrama.redditslide.Activities.GifView;
 import me.ccrama.redditslide.Activities.Website;
 import me.ccrama.redditslide.Adapters.AlbumView;
@@ -63,6 +62,17 @@ public class AlbumUtils {
         public Activity baseActivity;
         public RecyclerView recyclerView;
 
+        /**
+         * Loads an imgur album/gallery and opens it in the appropriate activity
+         *
+         * Types that can be opened: Album, Gallery(can be album or image)
+         * @param url An imgur url
+         * @param baseActivity Activity
+         * @param finishIfNone Closes the given activity if the album couldn't be loaded
+         * @param openExternalNotAlbum Opens the url in an external browser if the album couldn't be loaded
+         * @param bar For setting the toolbar title
+         * @param recyclerView
+         */
 
         public LoadAlbumFromUrl(@NotNull String url, @NotNull Activity baseActivity, boolean finishIfNone, boolean openExternalNotAlbum, @Nullable ActionBar bar, @NotNull RecyclerView recyclerView) {
 
@@ -93,8 +103,6 @@ public class AlbumUtils {
 
         @Override
         protected Void doInBackground(final String... sub) {
-
-
             if (gallery) {
                 Ion.with(baseActivity)
                         //Galleries can be both, albums and images
@@ -109,42 +117,34 @@ public class AlbumUtils {
 
                                     JsonObject resultData = result.getAsJsonObject("data");
                                     if (resultData != null && !resultData.isJsonNull()) {
-                                        //Gallery is album
+
                                         if (resultData.get("is_album").getAsBoolean()) {
+                                            //is album
                                             setupAlbumView(resultData);
+                                        } else if (resultData.get("animated").getAsBoolean()) {
+                                            //is gif
+                                            Intent i = new Intent(baseActivity, GifView.class);
+                                            i.putExtra(GifView.EXTRA_URL, resultData.get("link").getAsString());
+                                            baseActivity.startActivity(i);
+                                            if (finishIfNone) baseActivity.finish();
                                         } else {
-                                            if (openExternalNotAlbum) {
-                                                //is gif
-                                                if (resultData.get("animated").getAsBoolean()) {
-                                                    Intent i = new Intent(baseActivity, GifView.class);
-                                                    i.putExtra(GifView.EXTRA_URL, resultData.get("link").getAsString());
-                                                    baseActivity.startActivity(i);
-                                                } else {
-                                                    openFailedRequestInBrowser();
-                                                }
-
-
-                                            }
-                                            if (finishIfNone) {
-                                                new AlertDialogWrapper.Builder(baseActivity)
-                                                        .setTitle(R.string.album_err_not_found)
-                                                        .setMessage(R.string.album_err_msg_not_found)
-                                                        .setCancelable(false)
-                                                        .setPositiveButton(R.string.btn_ok, new DialogInterface.OnClickListener() {
-                                                            @Override
-                                                            public void onClick(DialogInterface dialog, int which) {
-                                                                baseActivity.finish();
-                                                            }
-                                                        }).create().show();
-                                            }
-                                            Log.w(LogUtil.getTag(), "Cannot open gallery, result is not an gallery");
+                                            //is image
+                                            Intent i = new Intent(baseActivity, FullscreenImage.class);
+                                            i.putExtra(FullscreenImage.EXTRA_URL, resultData.get("link").getAsString());
+                                            baseActivity.startActivity(i);
+                                            if (finishIfNone) baseActivity.finish();
                                         }
+
+                                    } else {
+                                        openFailedRequestInBrowser();
+                                        Log.w(LogUtil.getTag(), "Cannot open gallery, result has no data");
                                     }
                                 } else {
                                     //Catch failed api call
                                     openFailedRequestInBrowser();
                                     Log.w(LogUtil.getTag(), "Cannot open gallery, no result");
                                 }
+
                             }
 
                         });
@@ -169,18 +169,7 @@ public class AlbumUtils {
                                         setupAlbumView(resultData);
 
                                     } else {
-                                        if (finishIfNone) {
-                                            new AlertDialogWrapper.Builder(baseActivity)
-                                                    .setTitle(R.string.album_err_not_found)
-                                                    .setMessage(R.string.album_err_msg_not_found)
-                                                    .setCancelable(false)
-                                                    .setPositiveButton(R.string.btn_ok, new DialogInterface.OnClickListener() {
-                                                        @Override
-                                                        public void onClick(DialogInterface dialog, int which) {
-                                                            baseActivity.finish();
-                                                        }
-                                                    }).create().show();
-                                        }
+                                        openFailedRequestInBrowser();
                                         Log.w(LogUtil.getTag(), "Cannot open album, result has no data");
                                     }
 

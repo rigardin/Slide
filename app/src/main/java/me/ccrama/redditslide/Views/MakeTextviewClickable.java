@@ -417,7 +417,7 @@ public class MakeTextviewClickable {
                     break;
                 case ALBUM:
                     if (SettingValues.album) {
-                        if (SettingValues.albumSwipe) {
+                        if (/*fixme SettingValues.albumSwipe*/false) {
                             Intent i = new Intent(c, AlbumPager.class);
                             i.putExtra(AlbumPager.EXTRA_URL, url);
                             c.startActivity(i);
